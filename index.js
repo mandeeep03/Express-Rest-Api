@@ -1,61 +1,82 @@
-const express = require('express');
-const fs = require('fs')
-const users = require('./Data/users.json'); 
-const { json } = require('stream/consumers');
-
+const express = require("express");
+const fs = require("fs");
+const users = require("./Data/users.json");
 
 const app = express();
-const PORT =2000;
-//middleware - used to put data in body
-app.use(express.urlencoded({extended:false}))
+const PORT = 2000;
 
-app.get('/', (req, res) => {
-    res.send("Hello from server");
+app.use(express.urlencoded({ extended: false }));
+app.use(express.json());
+
+app.get("/", (req, res) => {
+  res.send("Hello from server");
 });
-//for serverside rendering  - send html page
-app.get('/users',(req,res)=>{
-    const html = `<ul>
-    ${users.map((users)=>`<li>${users.first_name}</li>`).join("")}
-    </ul>`
-    return res.send(html)
 
-})
-//for client side rendering - send json data
+// server-side rendering-sends mhtml from sever
+app.get("/users", (req, res) => {
+  const html = `
+    <ul>
+      ${users.map((user) => `<li>${user.first_name}</li>`).join("")}
+    </ul>
+  `;
+  res.send(html);
+});
+
+// all users:client side rendering 
 app
-.route('/api/users')
-.get((req, res) => {
+  .route("/api/users")
+  .get((req, res) => {
     res.json(users);
-})
-.post((req,res)=>{
-    const body = req.body
-    users.push({id : users.length+1,...body})
-    fs.writeFile('./Data/users.json',JSON.stringify(users),(err,data)=>{
-        res.json({"User added":"success"})
-    })
-})
+  })
+  .post((req, res) => {
+    const body = req.body;
+    if (!body.first_name) {
+      return res.status(400).json({ error: "first_name is required" });
+    }
 
+    const newUser = { id: users.length + 1, ...body };
+    users.push(newUser);
+
+    fs.writeFile("./Data/users.json", JSON.stringify(users, null, 2), (err) => {
+      if (err) return res.status(500).json({ error: "Failed to save user" });
+      res.status(201).json(newUser);
+    });
+  });
+
+// single user
 app
-.route('/api/users/:id')//id is a dynamic parameter that will be in url 
-.get((req, res) => {
-    const id = Number(req.params.id)
-    const user = users.find(user=>user.id===id)
-    res.json(user)
-})
-.patch((req,res)=>{
-    const id = Number(req.params.id)
-    const user = users.find(user=>user.id===id)
+  .route("/api/users/:id")
+  .get((req, res) => {
+    const id = Number(req.params.id);
+    const user = users.find((u) => u.id === id);
+    if (!user) return res.status(404).json({ error: "User not found" });
+    res.json(user);
+  })
+  .patch((req, res) => {
+    const id = Number(req.params.id);
+    const user = users.find((u) => u.id === id);
+    if (!user) return res.status(404).json({ error: "User not found" });
 
-    Object.assign(user,req.body)
+    Object.assign(user, req.body);
 
-    fs.writeFile('./Data/users.json', JSON.stringify(user),(err,data)=>{
-        res.json({"status":"success"})
-    })
-})
+    fs.writeFile("./Data/users.json", JSON.stringify(users), (err) => {
+      if (err) return res.status(500).json({ error: "Failed to update user" });
+      res.json(user);
+    });
+  })
+  .delete((req, res) => {
+    const id = Number(req.params.id);
+    const index = users.findIndex((u) => u.id === id);
+    if (index === -1) return res.status(404).json({ error: "User not found" });
 
+    const removed = users.splice(index, 1)[0];
 
+    fs.writeFile("./Data/users.json", JSON.stringify(users), (err) => {
+      if (err) return res.status(500).json({ error: "Failed to delete user" });
+      res.json(removed);
+    });
+  });
 
-
-app.listen(PORT, (err) => { 
-    console.log(err)
-    console.log(`Server started at: http://localhost:${PORT}`);
+app.listen(PORT, () => {
+  console.log(`Server started at: http://localhost:${PORT}`);
 });
