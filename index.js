@@ -1,6 +1,7 @@
 const express = require('express');
 const fs = require('fs')
 const users = require('./Data/users.json'); 
+const { json } = require('stream/consumers');
 
 
 const app = express();
@@ -20,9 +21,18 @@ app.get('/users',(req,res)=>{
 
 })
 //for client side rendering - send json data
-app.get('/api/users', (req, res) => {
+app
+.route('/api/users')
+.get((req, res) => {
     res.json(users);
-});
+})
+.post((req,res)=>{
+    const body = req.body
+    users.push({id : users.length+1,...body})
+    fs.writeFile('./Data/users.json',JSON.stringify(users),(err,data)=>{
+        res.json({"User added":"success"})
+    })
+})
 
 app
 .route('/api/users/:id')//id is a dynamic parameter that will be in url 
@@ -31,12 +41,19 @@ app
     const user = users.find(user=>user.id===id)
     res.json(user)
 })
+.patch((req,res)=>{
+    const id = Number(req.params.id)
+    const user = users.find(user=>user.id===id)
 
+    Object.assign(user,req.body)
 
-app.post('/api/users',(req,res)=>{
-    const body = req.body
-    console.log(body)
+    fs.writeFile('./Data/users.json', JSON.stringify(user),(err,data)=>{
+        res.json({"status":"success"})
+    })
 })
+
+
+
 
 app.listen(PORT, (err) => { 
     console.log(err)
