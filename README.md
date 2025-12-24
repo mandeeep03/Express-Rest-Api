@@ -19,8 +19,8 @@ A simple RESTful API built with Express.js for managing user data with CRUD oper
 
 1. Clone the repository:
 ```bash
-git clone <your-repo-url>
-cd <project-directory>
+git clone https://github.com/mandeeep03/Express-Rest-Api.git
+cd Express-Rest-Api
 ```
 
 2. Install dependencies:
@@ -290,13 +290,9 @@ npm install express
 - [ ] Add rate limiting
 - [ ] Add unit tests
 
-## 📄 License
-
-MIT
-
 ## 👤 Author
 
-Your Name
+Mandeep Bhatt
 
 ## 🤝 Contributing
 
