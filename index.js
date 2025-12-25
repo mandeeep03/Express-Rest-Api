@@ -64,15 +64,22 @@ app.get("/users", async (req, res) => {
 app
   .route("/api/users")
   .get(async (req, res) => {
-    const allUser = await User.find({})
-    res.status(200).json(allUser)
-    
+    const allUser = await User.find({});
+    res
+      .status(200)
+      .json(allUser);
   })
   .post(async (req, res) => {
     const body = req.body;
     //return 400 for bad request (incomplete information)
-    if (!body.first_name || !body.email || !body.gender || !body.job_tittle) {
-      return res.status(400).json({ msg: "all feilds are required ..." });
+    if (
+      !body.first_name ||
+      !body.email || 
+      !body.gender || 
+      !body.job_tittle) {
+      return res
+                .status(400)
+                .json({ msg: "all feilds are required ..." });
     }
 
     const result = await User.create({
@@ -83,7 +90,9 @@ app
       jobTitle: body.job_tittle,
     });
     console.log(result);
-    return res.status(201).json({ msg: "User Created !!!" });
+    return res
+              .status(201)
+              .json({ msg: "User Created !!!" });
   });
 
 // single user
@@ -92,13 +101,17 @@ app
   .get((req, res) => {
     const id = Number(req.params.id);
     const user = users.find((u) => u.id === id);
-    if (!user) return res.status(404).json({ error: "User not found" });
+    if (!user) return res
+                          .status(404)
+                          .json({ error: "User not found" });
     res.json(user);
   })
   .patch((req, res) => {
     const id = Number(req.params.id);
     const user = users.find((u) => u.id === id);
-    if (!user) return res.status(404).json({ error: "User not found" });
+    if (!user) return res
+                          .status(404)
+                          .json({ error: "User not found" });
 
     Object.assign(user, req.body);
 
