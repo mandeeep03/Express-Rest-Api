@@ -3,14 +3,13 @@ const fs = require("fs");
 const mongoose = require("mongoose");
 const users = require("./Data/users.json");
 
-const app = express();
-const PORT = 2000;
-
+//Connection
 mongoose
-  .connect("mongodb://127.0.0.1:27017/rest-api")
-  .then(() => console.log("Database Connected !!!"))
-  .catch((error) => console.log(error));
+  .connect("mongodb://127.0.0.1:27017/my-rest-api")
+  .then(() => console.log("Databse Connected !!!"))
+  .catch((err) => console.log(err));
 
+//schema
 const userSchema = new mongoose.Schema(
   {
     firstName: {
@@ -24,10 +23,10 @@ const userSchema = new mongoose.Schema(
       type: String,
       unique: true,
     },
-    gender: {
+    jobTitle: {
       type: String,
     },
-    jobTitle: {
+    gender: {
       type: String,
     },
   },
@@ -36,7 +35,11 @@ const userSchema = new mongoose.Schema(
   }
 );
 
+//Model
 const User = mongoose.model("user", userSchema);
+
+const app = express();
+const PORT = 2000;
 
 //middleware fro encode data in body
 app.use(express.urlencoded({ extended: false }));
@@ -46,11 +49,12 @@ app.get("/", (req, res) => {
 });
 
 // server-side rendering-sends mhtml from sever
-app.get("/users", (req, res) => {
+app.get("/users", async (req, res) => {
   //create html page
+  const allUser = await User.find({});
   const html = `
     <ul>
-      ${users.map((user) => `<li>${user.first_name}</li>`).join("")}
+      ${allUser.map((user) => `<li>${user.firstName}</li>`).join("")}
     </ul>
   `;
   res.send(html);
@@ -59,22 +63,27 @@ app.get("/users", (req, res) => {
 // all users:client side rendering
 app
   .route("/api/users")
-  .get((req, res) => {
-    res.json(users);
+  .get(async (req, res) => {
+    const allUser = await User.find({})
+    res.status(200).json(allUser)
+    
   })
   .post(async (req, res) => {
     const body = req.body;
-    if (!body.first_name) {
-      return res.status(400).json({ error: "first_name is required" });
+    //return 400 for bad request (incomplete information)
+    if (!body.first_name || !body.email || !body.gender || !body.job_tittle) {
+      return res.status(400).json({ msg: "all feilds are required ..." });
     }
 
-    const newUser = { id: users.length + 1, ...body };
-    users.push(newUser);
-
-    fs.writeFile("./Data/users.json", JSON.stringify(users, null, 2), (err) => {
-      if (err) return res.status(500).json({ error: "Failed to save user" });
-      res.status(201).json(newUser);
+    const result = await User.create({
+      firstName: body.first_name,
+      lastName: body.last_name,
+      email: body.email,
+      gender: body.gender,
+      jobTitle: body.job_tittle,
     });
+    console.log(result);
+    return res.status(201).json({ msg: "User Created !!!" });
   });
 
 // single user
