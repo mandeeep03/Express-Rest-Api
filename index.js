@@ -1,7 +1,6 @@
 const express = require("express");
-const fs = require("fs");
 const mongoose = require("mongoose");
-const users = require("./Data/users.json");
+
 
 //Connection
 mongoose
@@ -98,39 +97,22 @@ app
 // single user
 app
   .route("/api/users/:id")
-  .get((req, res) => {
-    const id = Number(req.params.id);
-    const user = users.find((u) => u.id === id);
+  .get(async (req, res) => {
+    const user = await User.findById(req.params.id)
     if (!user) return res
                           .status(404)
                           .json({ error: "User not found" });
     res.json(user);
   })
-  .patch((req, res) => {
-    const id = Number(req.params.id);
-    const user = users.find((u) => u.id === id);
-    if (!user) return res
-                          .status(404)
-                          .json({ error: "User not found" });
+  .patch(async (req, res) => {
+    await User.findByIdAndUpdate(req.params.id,req.body)
+              .then(()=>res.status(200).json({msg:"User updated"}))
 
-    Object.assign(user, req.body);
-
-    fs.writeFile("./Data/users.json", JSON.stringify(users), (err) => {
-      if (err) return res.status(500).json({ error: "Failed to update user" });
-      res.json(user);
-    });
+    
   })
-  .delete((req, res) => {
-    const id = Number(req.params.id);
-    const index = users.findIndex((u) => u.id === id);
-    if (index === -1) return res.status(404).json({ error: "User not found" });
-
-    const removed = users.splice(index, 1)[0];
-
-    fs.writeFile("./Data/users.json", JSON.stringify(users), (err) => {
-      if (err) return res.status(500).json({ error: "Failed to delete user" });
-      res.json(removed);
-    });
+  .delete(async (req, res) => {
+    await User.findByIdAndDelete(req.params.id)
+              .then(()=>res.status(200).json({msg:"Deleted"}))
   });
 
 app.listen(PORT, () => {
